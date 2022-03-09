@@ -1,0 +1,44 @@
+    <div class="container-fluid">
+      <!-- my content -->
+      <div class="row bg-light">
+        <div class="col-2">
+          <p><h5>ID: <span  id="id">{{id}}</span></h5></p>
+        </div>
+        <div class="col-sm">
+          <p><h5>File Name: <span id="file_name" class="text-primary">{{file_name}}</span></h5></p>
+        </div>
+        <div class="col-sm">
+          <p><h5>Screen Name: <span id="screen_name">{{SCREEN_NAME}}</span></h5></p>
+        </div>
+        <div class="col-sm">
+          <p><h5>Session Id: <span id="session_id">{{SESSUUID}}</span></h5></p>
+        </div>
+        <div class="float-right col-auto" role="group" aria-label="Controls">
+          <button type="button" class="btn btn-default toggle-panel float-right" id="btn-toggle"><i class="bi bi-toggle-on"></i></button>
+        </div>
+      </div>
+      <div class="row" id="row-main">
+        <div id="js-canvas" class="col-md-8"></div>
+        <div id="properties-panel-parent" class="col-md-4"></div>
+      </div>
+    <!-- my content -->
+    </div>
+    
+    <!-- components -->
+    <div id='io-alerts'></div>
+    <div id='io-dialog-import-warnings'></div>
+    <div id='io-dialog-keybindings-dialog'></div>
+    <div id='io-editing-tools'></div>
+    <div id='io-import-export'></div>
+    <div id='io-zoom-controls'></div>
+
+<!--
+{% include "bpmn/modeler/components/io-alerts.hbs" %}
+{% include "bpmn/modeler/components/io-dialog import-warnings.hbs" %}
+{% include "bpmn/modeler/components/io-dialog keybindings-dialog.hbs" %}
+{% include "bpmn/modeler/components/io-editing-tools.hbs" %}
+{% include "bpmn/modeler/components/io-import-export.hbs" %}
+{% include "bpmn/modeler/components/io-zoom-controls.hbs" %}
+{# {% include "bpmn/modeler/components/io-about.hbs" %} #}
+{# {% include "bpmn/modeler/components/io-dialog about.hbs" %} #}
+-->
