@@ -1,23 +1,20 @@
 import $ from 'jquery';
-import * as Handlebars from "handlebars";
-// import * as layouts from 'handlebars-layouts';
-import { loadState, saveState } from './libs/sessionStorage';
-import { togglePanel } from './libs/togglePanel';
+
+//-- project libs of UtilClass
+import SessionStateStore from './lib/SessionStateStore';
+import DataUtil from  './lib/DataUtil';
+import HbsUtil from  './lib/HbsUtil';
+
+//-- project libs: acton event
 import { openLocal, createNew, uploadBpmn, saveLocal, saveSvg } from './modeler/components/io-import-export';
-// import { openLocal, uploadBpmn, saveLocal, saveSvg } from './modeler/components/io-import-export';
 import { zoomReset, zoomIn, zoomOut } from './modeler/components/io-zoom-controls';
 import { displayKeyMap, toggleFullscreen } from './modeler/components/io-editing-tools';
+import { togglePanel } from './lib/togglePanel';
+import { registerFileDrop } from './lib/registerFileDrop';
 
-import BpmnModeler from "bpmn-js/lib/Modeler";
+// -- Custom Modeler
+import { CustomBpmnModelerFactory } from "./modeler/CustomBpmnModelerFactory";
 
-import propertiesPanelModule from "bpmn-js-properties-panel";
-import propertiesProviderModule from "bpmn-js-properties-panel/lib/provider/camunda";
-import camundaModdleExtension from "camunda-bpmn-moddle/lib";
-
-import customDescriptor from "./modeler/descripter/camundaDescriptor.json";
-// import customDescriptor from "./modeler/descripter/magicDescriptor.json";
-
-// import './style.css'
 import './modeler/modeler.css'
 
 // local setting for debug
@@ -29,100 +26,60 @@ const init = (sessuuid) => {
     'SESSUUID': sessuuid,
     'SCREEN_NAME': 'Modeler'
   }
-  saveState(sessuuid, sessdata);
+  SessionStateStore.saveState(sessuuid, sessdata);
 }
 
-// fetch file data
-const fetchData = async (url) => {
-  return fetch(url).then(response => response.text());
-}
-
-// event actions
-// const createNew = async (elm) => {
-//   try {
-//     let ret = confirm('Create new file.');
-//     if (ret) {
-//       await elm.data.bpmnModeler.importXML(initialDiagram);
-//       $('#file_name').text('new file')
-//       $('#id').text('')
-//     }
-//   } catch (err) {
-//     console.error(err);
-//   }
-// }
-
-
-// draw canvas: document ready action
-const drawCanvas = (bpmnXML) => {
-  
-  // import diagram
+const displayDiagram = async (xml_data, file_name) => {
   try {
-    const result = bpmnModeler.importXML(bpmnXML);
+    const result = bpmnModeler.importXML(xml_data);
     const { warnings } = result;
-    console.log(warnings);
+    console.log("Open a file :" + file_name);
   } catch (err) {
     console.log(err.message, err.warnings);
+    alert('could not import BPMN 2.0 XML, see console');
   }
-  // access viewer components
-  const canvas = bpmnModeler.get("canvas");
+}
+
+// draw canvas: document ready action
+const drawCanvas = (bpmnXML, file_name) => {
   
-  // zoom to fit full viewport
+  // import xml into canvas
+  displayDiagram(bpmnXML, file_name);
+  
+  // canvas.zoom
+  const canvas = bpmnModeler.get("canvas");
   canvas.zoom("fit-viewport");
   
 }
 
-const renderTemplate = (divId, templateSrc, jsonObj) => {
-  // rendering hbs
-  const template = Handlebars.compile(templateSrc);
-  $(divId).html(template(jsonObj));
 
-}
-
-const renderComponent = async (divId, hbs_file_name, jsonObj) => {
-  const templateUrl = "./src/" + hbs_file_name;
-  const templateSrc = await fetchData(templateUrl);
-  renderTemplate(divId, templateSrc, jsonObj)
-}
-
-const renderHbs = async (sessuuid) => {
+const renderHbs = async (sessuuid, elApp, elComponents) => {
   // load session state store
-  const jsonObj = loadState(sessuuid);
-  const file_name = jsonObj.file_name;
+  const stateData = SessionStateStore.loadState(sessuuid);
+  const file_name = stateData.file_name;
   
   // rendering hbs
   //// modeler.hbs
-  await renderComponent('#app', './modeler/modeler.hbs', jsonObj);
-  //// componets/io-alerts.hbs
-  await renderComponent('#io-alerts', './modeler/components/io-alerts.hbs');
-  //// componets/io-dialog import-warnings.hbs
-  await renderComponent('#io-dialog-import-warnings', './modeler/components/io-dialog import-warnings.hbs', {});
-  //// componets/io-dialog keybindings-dialog.hbs
-  await renderComponent('#io-dialog-keybindings-dialog', './modeler/components/io-dialog keybindings-dialog.hbs', {});
-  //// componets/io-editing-tools.hbs
-  await renderComponent('#io-editing-tools', './modeler/components/io-editing-tools.hbs', {});
-  //// componets/io-import-export.hbs
-  await renderComponent('#io-import-export', './modeler/components/io-import-export.hbs', {});
-  //// componets/io-zoom-controls.hbs
-  await renderComponent('#io-zoom-controls', './modeler/components/io-zoom-controls.hbs', {});
+  await HbsUtil.renderComponent(elApp, HBS_MAIN_TEMPLATE, stateData);
+  $(elComponents).html(divComponents);
+
+  //// componets/*.hbs  // -- Can not use ary.forEach
+  for(let itm of aryHbsComponents) {
+    console.log(`render ${itm.hbsPath} ...`);
+    await HbsUtil.renderComponent(
+      itm.el, 
+      itm.hbsPath, 
+      itm.data
+    );
+  }
   
   // new Bpmn Modeler
-  bpmnModeler = new CustomBpmnModeler({
-    container: '#js-canvas',
-    keyboard: {
-      bindTo: document
-    },
-    propertiesPanel: {
-      parent: "#properties-panel-parent"
-    },
-    additionalModules: [camundaModdleExtension],
-    moddleExtensions: {
-      camunda: customDescriptor
-    }
-  });
+  const factory = new CustomBpmnModelerFactory()
+  bpmnModeler = factory.get_modeler(EL_CANVAS, EL_PROPERTIES_PANEL_PARENT)
   
   // Event- Actions
   $("#btn_openLocal").on("click", openLocal);
-  $("#btn_createNew").on("click", {bpmnModeler: bpmnModeler, initialDiagram: initialDiagram}, createNew);
+  $("#btn_createNew").on("click", {bpmnModeler: bpmnModeler, initialDiagram: initialDiagram, fileName: INITIAL_XML_NAME}, createNew);
   $("#btn_uploadBpmn").on("click", uploadBpmn);
   $("#btn_saveLocal").on("click", saveLocal);
   $("#btn_saveSvg").on("click", saveSvg);
@@ -131,29 +88,49 @@ const renderHbs = async (sessuuid) => {
   $("#btn_zoomReset").on("click", zoomReset);
   $("#btn_zoomIn").on("click", zoomIn);
   $("#btn_zoomOut").on("click", zoomOut)
-  // Event- Actions : properties Panel
+  // Event- Actions : toggle Properties Panel
   $(".toggle-panel").on("click", togglePanel);
+  // Event- Actions : drop a file
+  const dropArea = $('#row-main');
+  if (!window.FileList || !window.FileReader) {
+    window.alert(
+      'Looks like you use an older browser that does not support drag and drop. ' +
+      'Try using Chrome, Firefox or the Internet Explorer > 10.');
+  } else {
+    registerFileDrop(dropArea, displayDiagram);
+  }
+
   
   // get bpmn XML data
   const url = "../../media/xml/" + file_name;
-  const bpmnXML = await fetchData(url);
+  const bpmnXML = await DataUtil.fetchData(url);
   // 
-  drawCanvas(bpmnXML)
+  drawCanvas(bpmnXML, file_name)
+
 };
 
 // -------------------------------------------// document.ready
-// Custom Bpmn Modeler Class
-class CustomBpmnModeler extends BpmnModeler {}
-
-CustomBpmnModeler.prototype._modules = [
-  ...BpmnModeler.prototype._modules,
-  propertiesPanelModule,
-  propertiesProviderModule
-];
-
 // variables
-const container = $('#row-main');
-const initialDiagram = await fetchData("../../media/xml/" + 'initialDiagram.bpmn');
+const INITIAL_XML_NAME = 'initialDiagram.bpmn';
+const initialDiagram = await DataUtil.fetchData("../../media/xml/" + INITIAL_XML_NAME);
+const HBS_MAIN_TEMPLATE = './modeler/modeler.hbs';
+const aryHbsComponents = [
+  {el: '#io-alerts', data: {}, hbsPath: './modeler/components/io-alerts.hbs'},
+  {el: '#io-dialog-import-warnings', data: {}, hbsPath: './modeler/components/io-dialog import-warnings.hbs'},
+  {el: '#io-dialog-keybindings-dialog', data: {}, hbsPath: './modeler/components/io-dialog keybindings-dialog.hbs'},
+  {el: '#io-editing-tools', data: {}, hbsPath: './modeler/components/io-editing-tools.hbs'},
+  {el: '#io-import-export', data: {}, hbsPath: './modeler/components/io-import-export.hbs'},
+  {el: '#io-zoom-controls', data: {}, hbsPath: './modeler/components/io-zoom-controls.hbs'},
+];
+const divComponents = `
+    <div id='io-alerts'></div>
+    <div id='io-dialog-import-warnings'></div>
+    <div id='io-dialog-keybindings-dialog'></div>
+    <div id='io-editing-tools'></div>
+    <div id='io-import-export'></div>
+    <div id='io-zoom-controls'></div>
+`;
+
 let bpmnModeler = {};
 
 // TODO: get session id
@@ -162,4 +139,9 @@ const sessuuid = '999999999999999';
 // TODO: remove 
 init(sessuuid);
 
-$(document).ready(renderHbs(sessuuid));
+const EL_APP = "#app";
+const EL_COMPONENTS = "#div-components";
+const EL_CANVAS = "#js-canvas";
+const EL_PROPERTIES_PANEL_PARENT = "#properties-panel-parent";
+
+$(document).on('load', renderHbs(sessuuid, EL_APP, EL_COMPONENTS));

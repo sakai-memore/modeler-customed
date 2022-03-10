@@ -10,8 +10,9 @@ export const createNew = async (elm) => {
     let ret = confirm('Create new file.');
     if (ret) {
       await elm.data.bpmnModeler.importXML(elm.data.initialDiagram);
-      $('#file_name').text('new file')
+      $('#file_name').text(elm.data.fileName)
       $('#id').text('')
+      console.log(elm.data.fileName)
     }
   } catch (err) {
     console.error(err);
