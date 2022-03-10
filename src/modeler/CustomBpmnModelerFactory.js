@@ -5,21 +5,21 @@ import camundaModdleExtension from "camunda-bpmn-moddle/lib";
 import customDescriptor from "./descripter/camundaDescriptor.json";
 
 // export class CustomBpmnModeler extends BpmnModeler {}
-export class CustomBpmnModelerFactory extends BpmnModeler {}
+export class CustomBpmnModelerFactory {}
+
+export class CustomBpmnModeler extends BpmnModeler {}
 
 // Custom Bpmn Modeler Class
 // CustomBpmnModeler.prototype._modules = [
-CustomBpmnModelerFactory.prototype._modules = [
+CustomBpmnModeler.prototype._modules = [
   ...BpmnModeler.prototype._modules,
   propertiesPanelModule,
   propertiesProviderModule
 ];
 
-// export class CustomBpmnModelerFactory {}
-
-CustomBpmnModelerFactory.prototype.get_modeler = (divIdContainer, divIdParentPropertiesPanel) => {
+CustomBpmnModelerFactory.prototype.get_instance = (divIdContainer, divIdParentPropertiesPanel) => {
   // new Bpmn Modeler
-  const bpmnModeler = new CustomBpmnModelerFactory({
+  const bpmnModeler = new CustomBpmnModeler({
     container: divIdContainer,
     keyboard: {
       bindTo: document

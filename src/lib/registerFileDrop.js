@@ -1,15 +1,17 @@
+import $ from 'jquery';
+
 export const registerFileDrop = (containerArea, cbFunc) => {
 
   const handleFileSelect = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    var files = e.dataTransfer.files;
-    var file = files[0];
-    var reader = new FileReader();
+    const files = e.dataTransfer.files;
+    const file = files[0];
+    const reader = new FileReader();
     
     reader.onload = function(e) {
       var xml = e.target.result;
-      cbFunc(xml);
+      cbFunc(xml, file.name);
     };
     reader.readAsText(file);
   }

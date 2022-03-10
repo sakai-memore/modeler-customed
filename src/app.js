@@ -29,11 +29,13 @@ const init = (sessuuid) => {
   SessionStateStore.saveState(sessuuid, sessdata);
 }
 
-const displayDiagram = async (xml_data, file_name) => {
+const displayDiagram = async (xml_data, file_name, id="") => {
   try {
     const result = bpmnModeler.importXML(xml_data);
     const { warnings } = result;
     console.log("Open a file :" + file_name);
+    $('#file_name').text(file_name);
+    $('#id').text(id)
   } catch (err) {
     console.log(err.message, err.warnings);
     alert('could not import BPMN 2.0 XML, see console');
@@ -41,10 +43,10 @@ const displayDiagram = async (xml_data, file_name) => {
 }
 
 // draw canvas: document ready action
-const drawCanvas = (bpmnXML, file_name) => {
+const drawCanvas = (bpmnXML, file_name, id) => {
   
   // import xml into canvas
-  displayDiagram(bpmnXML, file_name);
+  displayDiagram(bpmnXML, file_name, id);
   
   // canvas.zoom
   const canvas = bpmnModeler.get("canvas");
@@ -53,15 +55,16 @@ const drawCanvas = (bpmnXML, file_name) => {
 }
 
 
-const renderHbs = async (sessuuid, elApp, elComponents) => {
+const renderHbs = async (sessuuid) => {
   // load session state store
   const stateData = SessionStateStore.loadState(sessuuid);
   const file_name = stateData.file_name;
+  const id = stateData.id;
   
   // rendering hbs
   //// modeler.hbs
-  await HbsUtil.renderComponent(elApp, HBS_MAIN_TEMPLATE, stateData);
-  $(elComponents).html(divComponents);
+  await HbsUtil.renderComponent(EL_APP, HBS_MAIN_TEMPLATE, stateData);
+  $(EL_COMPONENTS).html(divComponents);
 
   //// componets/*.hbs  // -- Can not use ary.forEach
   for(let itm of aryHbsComponents) {
@@ -75,7 +78,7 @@ const renderHbs = async (sessuuid, elApp, elComponents) => {
   
   // new Bpmn Modeler
   const factory = new CustomBpmnModelerFactory()
-  bpmnModeler = factory.get_modeler(EL_CANVAS, EL_PROPERTIES_PANEL_PARENT)
+  bpmnModeler = factory.get_instance(EL_CANVAS, EL_PROPERTIES_PANEL_PARENT)
   
   // Event- Actions
   $("#btn_openLocal").on("click", openLocal);
@@ -91,7 +94,7 @@ const renderHbs = async (sessuuid, elApp, elComponents) => {
   // Event- Actions : toggle Properties Panel
   $(".toggle-panel").on("click", togglePanel);
   // Event- Actions : drop a file
-  const dropArea = $('#row-main');
+  const dropArea = $(EL_DROP_AREA);
   if (!window.FileList || !window.FileReader) {
     window.alert(
       'Looks like you use an older browser that does not support drag and drop. ' +
@@ -102,17 +105,18 @@ const renderHbs = async (sessuuid, elApp, elComponents) => {
 
   
   // get bpmn XML data
-  const url = "../../media/xml/" + file_name;
+  const url = MEDIA_PATH + file_name;
   const bpmnXML = await DataUtil.fetchData(url);
   // 
-  drawCanvas(bpmnXML, file_name)
+  drawCanvas(bpmnXML, file_name, id);
 
 };
 
 // -------------------------------------------// document.ready
 // variables
+const MEDIA_PATH = '../../media/xml/';
 const INITIAL_XML_NAME = 'initialDiagram.bpmn';
-const initialDiagram = await DataUtil.fetchData("../../media/xml/" + INITIAL_XML_NAME);
+const initialDiagram = await DataUtil.fetchData(MEDIA_PATH + INITIAL_XML_NAME);
 const HBS_MAIN_TEMPLATE = './modeler/modeler.hbs';
 const aryHbsComponents = [
   {el: '#io-alerts', data: {}, hbsPath: './modeler/components/io-alerts.hbs'},
@@ -143,5 +147,6 @@ const EL_APP = "#app";
 const EL_COMPONENTS = "#div-components";
 const EL_CANVAS = "#js-canvas";
 const EL_PROPERTIES_PANEL_PARENT = "#properties-panel-parent";
+const EL_DROP_AREA = "#row-main";
 
-$(document).on('load', renderHbs(sessuuid, EL_APP, EL_COMPONENTS));
+$(document).on('load', renderHbs(sessuuid));
