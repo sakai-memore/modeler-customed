@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import 'bootstrap';
 
 //-- project libs of UtilClass
 import SessionStateStore from './lib/SessionStateStore';
@@ -48,9 +49,10 @@ const drawCanvas = (bpmnXML, file_name, id) => {
   // import xml into canvas
   displayDiagram(bpmnXML, file_name, id);
   
-  // canvas.zoom
+  // get canvas
   const canvas = bpmnModeler.get("canvas");
-  canvas.zoom("fit-viewport");
+  // zoom to fit full viewport
+  canvas.zoom('fit-viewport');
   
 }
 
@@ -79,6 +81,9 @@ const renderHbs = async (sessuuid) => {
   // new Bpmn Modeler
   const factory = new CustomBpmnModelerFactory()
   bpmnModeler = factory.get_instance(EL_CANVAS, EL_PROPERTIES_PANEL_PARENT)
+  
+  // initial diagram
+  const initialDiagram = await DataUtil.fetchData(MEDIA_PATH + INITIAL_XML_NAME);
   
   // Event- Actions
   $("#btn_openLocal").on("click", openLocal);
@@ -116,7 +121,6 @@ const renderHbs = async (sessuuid) => {
 // variables
 const MEDIA_PATH = '../../media/xml/';
 const INITIAL_XML_NAME = 'initialDiagram.bpmn';
-const initialDiagram = await DataUtil.fetchData(MEDIA_PATH + INITIAL_XML_NAME);
 const HBS_MAIN_TEMPLATE = './modeler/modeler.hbs';
 const aryHbsComponents = [
   {el: '#io-alerts', data: {}, hbsPath: './modeler/components/io-alerts.hbs'},

@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "serv": "http-server -o ./index-build.html"
+    "serv": "http-server -o ./index-build.html -c-1"
   },
   "devDependencies": {
+    "@rollup/plugin-inject": "^4.0.4",
+    "bootstrap": "^4.3.1",
     "bpmn-js": "^8.10.0",
     "bpmn-js-properties-panel": "^0.46.0",
     "camunda-bpmn-moddle": "^6.1.2",
@@ -17,7 +19,7 @@
     "handlebars": "^4.7.7",
     "handlebars-layouts": "^3.1.4",
     "http-server": "^14.1.0",
-    "jquery": "^3.6.0",
+    "jquery": "^3.4.1",
     "vite": "^2.8.0",
     "vite-plugin-static-copy": "^0.3.0"
   }

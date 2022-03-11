@@ -1,5 +1,6 @@
 // import dotenv from 'dotenv';
 import { defineConfig } from 'vite';
+import inject from '@rollup/plugin-inject';
 // import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // dotenv.config();
@@ -14,5 +15,12 @@ export default defineConfig({
       format: ['es']
     }
   },
-  // publicDir: './assets/'
+  // publicDir: './assets/',
+  plugins: [
+    // Add it first
+    inject({
+        $: 'jquery',
+        Popper: ['popper.js', 'default'] 
+    }),
+  ],  
 })
