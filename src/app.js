@@ -64,16 +64,22 @@ const renderHbs = async (sessuuid) => {
   const id = stateData.id;
   
   // rendering hbs
+  // static path for django
+  let STATIC_PATH = $(EL_STATIC_PATH).text();
+  if(STATIC_PATH == ''){
+    STATIC_PATH = STATIC_PATH_CUSTOMED;
+  }
   //// modeler.hbs
-  await HbsUtil.renderComponent(EL_APP, HBS_MAIN_TEMPLATE, stateData);
+  await HbsUtil.renderComponent(EL_APP, STATIC_PATH + HBS_MAIN_TEMPLATE, stateData);
   $(EL_COMPONENTS).html(divComponents);
-
+  console.log(`render ${STATIC_PATH + HBS_MAIN_TEMPLATE} ...`);
+  
   //// componets/*.hbs  // -- Can not use ary.forEach
   for(let itm of aryHbsComponents) {
-    console.log(`render ${itm.hbsPath} ...`);
+    console.log(`render ${STATIC_PATH + itm.hbsPath} ...`);
     await HbsUtil.renderComponent(
       itm.el, 
-      itm.hbsPath, 
+      STATIC_PATH + itm.hbsPath, 
       itm.data
     );
   }
@@ -152,5 +158,9 @@ const EL_COMPONENTS = "#div-components";
 const EL_CANVAS = "#js-canvas";
 const EL_PROPERTIES_PANEL_PARENT = "#properties-panel-parent";
 const EL_DROP_AREA = "#row-main";
+
+// For Server Side Rendering
+const EL_STATIC_PATH = "#STATIC-PATH";
+const STATIC_PATH_CUSTOMED = "../../../static/modeler-customed/src";
 
 $(document).on('load', renderHbs(sessuuid));
